@@ -2,7 +2,7 @@
 
 # Glue database for Iceberg tables
 resource "aws_glue_catalog_database" "lakehouse" {
-  name = "lakehouse_${replace(var.environment, \"-\", \"_\")}"
+  name = "lakehouse_dev"
 
   description = "Data lakehouse database for ${var.project_prefix} - ${var.environment}"
 
@@ -12,7 +12,6 @@ resource "aws_glue_catalog_database" "lakehouse" {
   }
 }
 
-# Outputs
 output "glue_database_name" {
   description = "Glue catalog database name"
   value       = aws_glue_catalog_database.lakehouse.name

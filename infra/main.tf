@@ -72,5 +72,5 @@ output "bucket_name" {
 
 output "glue_database" {
   description = "Glue catalog database name"
-  value       = "lakehouse_${replace(var.environment, \"-\", \"_\")}"
+  value       = "lakehouse_dev"
 }
