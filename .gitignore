@@ -1,0 +1,53 @@
+# Credentials & Secrets
+.env
+.env.local
+.aws/
+*.pem
+*.key
+credentials
+~/.aws/
+
+# Terraform
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!terraform.tfvars.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.vscode/
+.idea/
+*.egg-info/
+dist/
+build/
+
+# Generated data
+data/*
+!data/.gitkeep
+
+# Reports
+reports/data_quality_report.json
+
+# IDE
+.DS_Store
+*.swp
+*.swo
+*~
+
+# CI/CD
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/

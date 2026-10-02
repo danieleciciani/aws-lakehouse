@@ -1,0 +1,18 @@
+# Terraform Configuration Example
+
+# Copy this file to terraform.tfvars and customize as needed
+
+project_prefix = "lakehouse-uber-demo"
+aws_region     = "us-east-1"
+environment    = "dev"
+cost_center    = "demo"
+owner          = "data-platform"
+
+# Glue job configuration
+glue_worker_type  = "G.1X"      # G.1X (4GB) or G.2X (16GB)
+glue_num_workers  = 2            # Minimum 2 for auto-scaling
+glue_job_timeout  = 10           # Minutes
+
+# Budget configuration (cost safety)
+budget_limit       = 10          # USD per month
+budget_alert_email = "danix.c96@gmail.com"
