@@ -1,49 +1,40 @@
-"""Gold Aggregation - Glue Job (converted from Notebook)
-
-Job Parameters required:
-  --BUCKET_NAME: lakehouse-uber-demo-605628228254-eu-north-1
-  --DATABASE_NAME: lakehouse_dev
-"""
+"""Gold Aggregation - Glue Job with Iceberg v2"""
 
 import sys
-from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
-from awsglue.job import Job
+from awsglue.utils import getResolvedOptions
 from pyspark.sql import functions as F
+from awsglue.job import Job
 
+# Inizializzazione standard Glue ETL
 args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BUCKET_NAME', 'DATABASE_NAME'])
-
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
 
 BUCKET = args['BUCKET_NAME']
 DB = args['DATABASE_NAME']
 
+# Configurazione Iceberg
 spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", f"s3://{BUCKET}/")
 spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
-
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
+spark.conf.set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
 
 def write_iceberg(df, table_name, partition_by=None):
-    """Write DataFrame as Iceberg table, create or replace."""
     location = f"s3://{BUCKET}/gold/{table_name}/"
-
     spark.sql(f"DROP TABLE IF EXISTS glue_catalog.{DB}.gold_{table_name}")
-
     writer = df.writeTo(f"glue_catalog.{DB}.gold_{table_name}") \
         .tableProperty("format-version", "2") \
         .tableProperty("location", location)
-
     if partition_by:
         writer = writer.partitionedBy(partition_by)
-
     writer.createOrReplace()
-    print(f"✓ {table_name}")
+
 
 # Read silver tables
 ride = spark.read.parquet(f"s3://{BUCKET}/silver/ride/")
@@ -88,5 +79,4 @@ passenger_activity = ride \
 
 write_iceberg(passenger_activity, "passenger_activity")
 
-print("\n✅ Gold Aggregation Complete")
 job.commit()
