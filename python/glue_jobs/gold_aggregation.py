@@ -8,23 +8,31 @@ from pyspark.sql import functions as F
 from awsglue.job import Job
 
 # Inizializzazione standard Glue ETL
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BUCKET_NAME', 'DATABASE_NAME'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-BUCKET = args['BUCKET_NAME']
-DB = args['DATABASE_NAME']
+BUCKET = "lakehouse-uber-demo-605628228254-eu-north-1"
+DB     = "lakehouse_dev"
 
-def write_parquet(df, table_name, partition_by=None):
-    """Write as Parquet to S3"""
+# Configurazione Iceberg (rimane uguale)
+spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", f"s3://{BUCKET}/")
+spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+
+def write_iceberg(df, table_name, partition_by=None):
     location = f"s3://{BUCKET}/gold/{table_name}/"
+    spark.sql(f"DROP TABLE IF EXISTS glue_catalog.{DB}.gold_{table_name}")
+    writer = df.writeTo(f"glue_catalog.{DB}.gold_{table_name}") \
+        .tableProperty("format-version", "2") \
+        .tableProperty("location", location)
     if partition_by:
-        df.write.partitionBy(partition_by).mode("overwrite").parquet(location)
-    else:
-        df.write.mode("overwrite").parquet(location)
+        writer = writer.partitionedBy(partition_by)
+    writer.createOrReplace()
 
 
 # Read silver tables
@@ -43,7 +51,7 @@ daily_metrics = ride \
         F.sum("distance_km").alias("total_distance_km")
     )
 
-write_parquet(daily_metrics, "daily_ride_metrics", partition_by=["request_date"])
+write_iceberg(daily_metrics, "daily_ride_metrics", partition_by="request_date")
 
 # ── DRIVER PERFORMANCE ──────────────────────────────────
 driver_perf = ride \
@@ -56,7 +64,7 @@ driver_perf = ride \
     ) \
     .join(driver.select("driver_id", "rating"), on="driver_id", how="left")
 
-write_parquet(driver_perf, "driver_performance")
+write_iceberg(driver_perf, "driver_performance")
 
 # ── PASSENGER ACTIVITY ──────────────────────────────────
 passenger_activity = ride \
@@ -68,6 +76,6 @@ passenger_activity = ride \
     ) \
     .join(passenger.select("passenger_id", "city", "status"), on="passenger_id", how="left")
 
-write_parquet(passenger_activity, "passenger_activity")
+write_iceberg(passenger_activity, "passenger_activity")
 
 job.commit()

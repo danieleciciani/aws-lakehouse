@@ -8,23 +8,31 @@ from pyspark.sql import functions as F
 from awsglue.job import Job
 
 # Inizializzazione standard Glue ETL
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BUCKET_NAME', 'DATABASE_NAME'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-BUCKET = args['BUCKET_NAME']
-DB = args['DATABASE_NAME']
+BUCKET = "lakehouse-uber-demo-605628228254-eu-north-1"
+DB     = "lakehouse_dev"
 
-def write_parquet(df, table_name, partition_by=None):
-    """Write as Parquet to S3"""
+# Configurazione Iceberg (rimane uguale)
+spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", f"s3://{BUCKET}/")
+spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+
+def write_iceberg(df, table_name, partition_by=None):
     location = f"s3://{BUCKET}/silver/{table_name}/"
+    spark.sql(f"DROP TABLE IF EXISTS glue_catalog.{DB}.silver_{table_name}")
+    writer = df.writeTo(f"glue_catalog.{DB}.silver_{table_name}") \
+        .tableProperty("format-version", "2") \
+        .tableProperty("location", location)
     if partition_by:
-        df.write.partitionBy(partition_by).mode("overwrite").parquet(location)
-    else:
-        df.write.mode("overwrite").parquet(location)
+        writer = writer.partitionedBy(partition_by)
+    writer.createOrReplace()
 
 
 # ── DRIVER ──────────────────────────────────────────────
@@ -35,7 +43,7 @@ driver_silver = driver \
     .filter(F.col("status").isin("active", "inactive")) \
     .dropDuplicates(["driver_id"])
 
-write_parquet(driver_silver, "driver")
+write_iceberg(driver_silver, "driver")
 
 # ── PASSENGER ───────────────────────────────────────────
 passenger = spark.read.parquet(f"s3://{BUCKET}/bronze/passenger/")
@@ -44,7 +52,7 @@ passenger_silver = passenger \
     .filter(F.col("email").isNotNull()) \
     .dropDuplicates(["passenger_id"])
 
-write_parquet(passenger_silver, "passenger")
+write_iceberg(passenger_silver, "passenger")
 
 # ── VEHICLE ─────────────────────────────────────────────
 vehicle = spark.read.parquet(f"s3://{BUCKET}/bronze/vehicle/")
@@ -52,7 +60,7 @@ vehicle_silver = vehicle \
     .filter(F.col("driver_id").isNotNull()) \
     .dropDuplicates(["vehicle_id"])
 
-write_parquet(vehicle_silver, "vehicle")
+write_iceberg(vehicle_silver, "vehicle")
 
 # ── PAYMENT ─────────────────────────────────────────────
 payment = spark.read.parquet(f"s3://{BUCKET}/bronze/payment/")
@@ -62,7 +70,7 @@ payment_silver = payment \
     .filter(F.col("amount") > 0) \
     .dropDuplicates(["payment_id"])
 
-write_parquet(payment_silver, "payment")
+write_iceberg(payment_silver, "payment")
 
 # ── RIDE ────────────────────────────────────────────────
 ride = spark.read.parquet(f"s3://{BUCKET}/bronze/ride/")
@@ -76,6 +84,6 @@ ride_silver = ride \
     .dropDuplicates(["ride_id"]) \
     .orderBy("pickup_city")
 
-write_parquet(ride_silver, "ride", partition_by=["pickup_city"])
+write_iceberg(ride_silver, "ride", partition_by="pickup_city")
 
 job.commit()
