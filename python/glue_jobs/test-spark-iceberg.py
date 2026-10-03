@@ -8,17 +8,15 @@ from pyspark.sql import functions as F
 from awsglue.job import Job
 
 # Inizializzazione standard Glue ETL
-#args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
-#job.init(args['JOB_NAME'], args)
 
 BUCKET = "lakehouse-uber-demo-605628228254-eu-north-1"
-DB     = "lakehouse_dev"
+DB = "lakehouse_dev"
 
-# Configurazione Iceberg (rimane uguale)
+# Configurazione Iceberg (spark.sql.extensions è pre-configurato in Glue)
 spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", f"s3://{BUCKET}/")
 spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
