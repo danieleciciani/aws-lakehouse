@@ -1,8 +1,4 @@
 # S3 Data Lake Bucket
-# NOTE: Requires SCP exception - blocked in trial accounts
-# See SCP exception request in ../docs/scp-exception-request.md
-
-/*
 resource "aws_s3_bucket" "data_lake" {
   bucket = local.bucket_name
 
@@ -128,4 +124,3 @@ output "s3_bucket_arn" {
   description = "S3 data lake bucket ARN"
   value       = aws_s3_bucket.data_lake.arn
 }
-*/
