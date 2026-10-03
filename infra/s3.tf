@@ -1,11 +1,18 @@
 # S3 Data Lake Bucket
+# NOTE: Requires SCP exception - blocked in trial accounts
+# See SCP exception request in ../docs/scp-exception-request.md
 
+/*
 resource "aws_s3_bucket" "data_lake" {
   bucket = local.bucket_name
 
   tags = merge(local.tags, {
     Name = "Data Lake - ${var.project_prefix}"
   })
+
+  lifecycle {
+    ignore_changes = [tags_all]
+  }
 }
 
 # Block all public access
@@ -85,6 +92,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "data_lake" {
     id     = "archive-old-versions"
     status = "Enabled"
 
+    filter {}
+
     noncurrent_version_transition {
       noncurrent_days = 30
       storage_class   = "GLACIER"
@@ -98,7 +107,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "data_lake" {
   rule {
     id     = "delete-old-quarantine"
     status = "Enabled"
-    prefix = "quarantine/"
+
+    filter {
+      prefix = "quarantine/"
+    }
 
     expiration {
       days = 30
@@ -116,3 +128,4 @@ output "s3_bucket_arn" {
   description = "S3 data lake bucket ARN"
   value       = aws_s3_bucket.data_lake.arn
 }
+*/

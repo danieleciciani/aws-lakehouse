@@ -24,12 +24,11 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project      = var.project_prefix
-      Environment  = var.environment
-      ManagedBy    = "terraform"
-      CostCenter   = var.cost_center
-      Owner        = var.owner
-      CreatedDate  = timestamp()
+      Project     = var.project_prefix
+      Environment = var.environment
+      ManagedBy   = "terraform"
+      CostCenter  = var.cost_center
+      Owner       = var.owner
     }
   }
 }

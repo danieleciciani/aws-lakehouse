@@ -1,15 +1,16 @@
 # Consolidated Outputs
+# NOTE: Deployment in trial AWS accounts is limited by SCPs for S3, Glue, and Athena
 
 output "deployment_summary" {
-  description = "Deployment summary"
+  description = "Deployment summary - Trial account (S3/Glue/Athena blocked by SCP)"
   value = {
     project_prefix      = var.project_prefix
     aws_account_id      = local.account_id
     aws_region          = local.region
     environment         = var.environment
-    s3_bucket_name      = local.bucket_name
-    glue_database_name  = aws_glue_catalog_database.lakehouse.name
-    athena_workgroup    = aws_athena_workgroup.lakehouse.name
+    status              = "Partial deployment - S3, Glue, Athena require SCP exceptions"
+    deployed_resources  = ["IAM roles", "Budget alerts"]
+    blocked_resources   = ["S3 bucket", "Glue database", "Athena workgroup"]
     budget_limit_usd    = var.budget_limit
   }
 }

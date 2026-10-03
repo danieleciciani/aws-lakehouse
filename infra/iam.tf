@@ -18,9 +18,15 @@ resource "aws_iam_role" "glue_job_role" {
   })
 
   tags = local.tags
+
+  lifecycle {
+    ignore_changes = [tags_all]
+  }
 }
 
 # Glue job policy: S3 access to data lake
+# NOTE: Depends on S3 bucket - commented out until SCP exception is granted
+/*
 resource "aws_iam_role_policy" "glue_s3_access" {
   name   = "${var.project_prefix}-glue-s3-access"
   role   = aws_iam_role.glue_job_role.id
@@ -44,8 +50,11 @@ resource "aws_iam_role_policy" "glue_s3_access" {
     ]
   })
 }
+*/
 
 # Glue job policy: Glue Catalog access
+# NOTE: Depends on Glue - commented out until SCP exception is granted
+/*
 resource "aws_iam_role_policy" "glue_catalog_access" {
   name   = "${var.project_prefix}-glue-catalog-access"
   role   = aws_iam_role.glue_job_role.id
@@ -75,8 +84,11 @@ resource "aws_iam_role_policy" "glue_catalog_access" {
     ]
   })
 }
+*/
 
 # Glue job policy: CloudWatch Logs
+# NOTE: Depends on Glue - commented out until SCP exception is granted
+/*
 resource "aws_iam_role_policy" "glue_logs_access" {
   name   = "${var.project_prefix}-glue-logs-access"
   role   = aws_iam_role.glue_job_role.id
@@ -96,6 +108,7 @@ resource "aws_iam_role_policy" "glue_logs_access" {
     ]
   })
 }
+*/
 
 # Athena execution role (optional, for queries)
 resource "aws_iam_role" "athena_role" {
@@ -115,9 +128,15 @@ resource "aws_iam_role" "athena_role" {
   })
 
   tags = local.tags
+
+  lifecycle {
+    ignore_changes = [tags_all]
+  }
 }
 
 # Athena policy: S3 and Glue Catalog access
+# NOTE: Depends on S3 bucket - commented out until SCP exception is granted
+/*
 resource "aws_iam_role_policy" "athena_access" {
   name   = "${var.project_prefix}-athena-access"
   role   = aws_iam_role.athena_role.id
@@ -153,6 +172,7 @@ resource "aws_iam_role_policy" "athena_access" {
     ]
   })
 }
+*/
 
 # Outputs
 output "glue_job_role_arn" {

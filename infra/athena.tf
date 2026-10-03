@@ -1,5 +1,7 @@
 # AWS Athena Configuration
+# NOTE: Depends on S3 bucket - commented out until SCP exception is granted
 
+/*
 # Athena workgroup
 resource "aws_athena_workgroup" "lakehouse" {
   name = "${var.project_prefix}-workgroup"
@@ -23,3 +25,4 @@ output "athena_workgroup_name" {
   description = "Athena workgroup name"
   value       = aws_athena_workgroup.lakehouse.name
 }
+*/
