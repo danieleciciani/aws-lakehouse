@@ -78,11 +78,7 @@ aws glue create-database \
 # Create Athena workgroup
 aws athena create-work-group \
   --name lakehouse-uber-demo-workgroup \
-  --configuration ResultConfigurationUpdates={OutputLocation="s3://lakehouse-uber-demo-ACCOUNT_ID-us-east-1/athena-results/"}
-```
-
-### Option 2: Local-Only Development (Current Environment)
-
+  --configuration ResultConfigurationaw
 Since this trial account has SCP restrictions, you can still:
 
 1. ✅ **Generate mock data locally** (no AWS)
