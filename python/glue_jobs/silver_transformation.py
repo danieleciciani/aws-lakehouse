@@ -18,12 +18,11 @@ job.init(args['JOB_NAME'], args)
 BUCKET = args['BUCKET_NAME']
 DB = args['DATABASE_NAME']
 
-# Configurazione Iceberg
+# Configurazione Iceberg (spark.sql.extensions è pre-configurato in Glue)
 spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", f"s3://{BUCKET}/")
 spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
-spark.conf.set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
 
 def write_iceberg(df, table_name, partition_by=None):
     location = f"s3://{BUCKET}/silver/{table_name}/"
